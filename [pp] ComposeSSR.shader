@@ -49,7 +49,7 @@ Shader "Unlit/ComposeSSR"
                 real4 reflection = tex2D(_ReflectionSSR, i.uv);
                 real t = SampleGBufferMetallicness(i.uv);
                 t = saturate(t);
-                t -= 0.05f;
+                t -= 0.05f;                     //<- Metallicness seems to have small offset -.5f to fix this
                 real4 refProduct = reflection;
                 refProduct = lerp(refProduct, refProduct * real4(SampleGBufferAlbedo(i.uv), 1.0f), t);
 
