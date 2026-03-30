@@ -1,0 +1,26 @@
+#include "NoiseCollection.hlsl"
+
+#pragma kernel GenerateSimpleNoise      //0
+#pragma kernel GenerateVoronoiNoise     //1
+#pragma kernel GeneratePerlinNoise      //2
+
+//simple noise generator. Uses unity's shadergraph functions (slightly modified for ease of usage)
+RWTexture2D<float4> noiseTex;
+float offset;
+float scale;
+
+[numthreads(8, 8, 8)]
+void GenerateSimpleNoise(uint3 id : SV_DISPATCHTHREADID){
+    noiseTex[id.xy] = SimpleNoise(id.xy + uint2(offset, offset), scale);
+}
+
+[numthreads(8, 8, 8)]
+void GenerateVoronoiNoise(uint3 id : SV_DISPATCHTHREADID){
+    float cells = 0;    //<- currently unused
+    noiseTex[id.xy] = Voronoi(id.xy + uint2(offset, offset), 45.0f, scale, cells);
+}
+
+[numthreads(8, 8, 8)]
+void GeneratePerlinNoise(uint3 id : SV_DISPATCHTHREADID){
+    noiseTex[id.xy] = PerlinNoise(id.xy + uint2(offset, offset), scale);
+}
