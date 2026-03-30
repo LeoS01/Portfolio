@@ -1,6 +1,8 @@
 ### Description
-This Screen-Space-Reflections implementation is intended for Unitys 'universal' renderpipeline.
-The Shader works by raymarching through the viewspace via reflected normals~ thus being dependent on reading the depth- and g-buffer.
+Context: Personal project.
+
+This Screen-Space-Reflections implementation is intended for Unitys universal-renderpipeline.
+It works by raymarching through the viewspace via reflected normals~ thus being dependent on reading the depth- and g-buffer.
 
 
 ### Passes
@@ -8,8 +10,6 @@ Overall, the effect has 3 passes:
 1 - Reflections are collected via raymarching (readable in 'code').
 2 - A Gaussian-blur is run over the reflections, to reduce overall noise.
 3 - The final result is composed.
-
-Additionally, the rendering-feature is also readable in 'code'.
 
 
 ### References

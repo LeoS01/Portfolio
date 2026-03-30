@@ -1,5 +1,7 @@
 ### Description
-This code represents the main entry point in my game-engine. Overall it works by providing a P_GameApp-class with unimplemented functions.
+Context: Custom game-engine.
+
+This code represents the main entry point of my game-engine. Overall it works by providing a P_GameApp-class with unimplemented functions.
 These functions are called in the OS-Specific entry points and can be defined per project for game-initialization, running and closing.
 
 Windows:

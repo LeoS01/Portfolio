@@ -1,5 +1,5 @@
 ### Description
-This Terrain-Generation was developed as part of a university-class.
+Context: University.
 
 The base-class 'Procedural-Mesh' initializes the generation of vertex-data (positions and indices).
 'ProdecuralTerrain' places these vertices in a grid.

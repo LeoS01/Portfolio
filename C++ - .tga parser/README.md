@@ -1,8 +1,9 @@
 ### Intro
-This parser was written as a part of my retro inspired header-only game-engine.
-While pre-existent libraries could've been used instead, thorough understanding and control are a priority.
-As retro-styled games are the overarching goal, the maximum valid .tga image size was kept very low (1MB).
-However, as long as this stays the case, the parser is able to deal with any .tga format (colormapping, RLE-Compression, ...).
+Context: Custom retro game-engine.
+
+The parser is able to deal with any .tga format (colormapping, RLE-Compression, ...).
+While pre-existent libraries could've been used instead, thorough understanding and control are of priority.
+As retro-styled games are the overarching goal, the maximum valid image size was kept very low (1MB) - which can be changed on demand.
 
 
 ### Usage
