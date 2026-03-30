@@ -100,7 +100,7 @@ def LinkToAPK(verbose:bool, recursive:bool = True) -> str:
         return finOut
 
     #Construct command
-    newPackageName = "pengine.pinstance." + Path.cwd().name.replace(" ", "")
+    newPackageName = "pengine.pinstance." + Config.GetOutputName()
     rename = f"--rename-manifest-package {newPackageName} --rename-resources-package {newPackageName}"
     resourceCommand:str = ""
     for file in sourceFiles:
@@ -285,7 +285,7 @@ def ConvertAPKtoAAB(inputFile:str, verbose:bool) -> str:
     return aabOut
 
 #Installs and returns run and close commands
-def InstallAndRun(appDir:str, key:str, verbose:bool) -> tuple[str, str]:
+def InstallAndRun(appDir:str, key:str, verbose:bool = True, activityName:str = "P_App._Android.PMainActivity") -> tuple[str, str]:
     #TODO: A shortcoming here is the necessity to always reinstall~
     #However, the engine is designed around mainly developing/testing on a desktop-OS~ thus this won't impose a large issue for now.
     
@@ -334,7 +334,7 @@ def InstallAndRun(appDir:str, key:str, verbose:bool) -> tuple[str, str]:
 
     #Run
     log.VMessage("\nStarting app")
-    startCmd = f"{adb} shell am start -n pengine.pinstance.{apPath.stem}/P_App._Android.PMainActivity"
+    startCmd = f"{adb} shell am start -n pengine.pinstance.{apPath.stem}/{activityName}"
     logCatCmd = f"{adb} logcat -c && {adb} logcat -s pengine.log"
     return [f"{startCmd} && {logCatCmd}", f"{adb} kill-server"]
 
@@ -345,7 +345,6 @@ def AndBuild(keyDir:str, verbose:bool = True, release: bool = False) -> str:
 
     if release:
         outPut = ConvertAPKtoAAB(outPut, verbose)
-        pass
 
     return SignFile(outPut, keyDir, verbose, release)
 
@@ -381,9 +380,19 @@ if __name__ == "__main__":
         exit(-1)
 
     Config.SetOutputDirectory(iodir)
-    out = AndBuild(iodir, key, verbose, release)
+    out = AndBuild(key, verbose, release)
     if out != "":
-        InstallAndRun(out, key, verbose)
+        commands = InstallAndRun(out, key, verbose)
+
+        #Run
+        try:
+            RunCMD(commands[0])
+        except KeyboardInterrupt:
+            log.Info("Ended!")
+        except Exception as e:
+            log.Error(str(e))
+
+        RunCMD(commands[1])
 
     print(out)
     exit(0)

@@ -22,8 +22,7 @@ RELEASE:bool = "-release" in args
 COMPILEONLY:bool = "-co" in args
 
 #Config
-DIR_SRC:str = ".\\code"
-DIR_ASSETS:str = ".\\assets"
+DIR_SRC:str = ".\\src"
 outSuffix = ".release" if RELEASE else ".debug"
 dir_out = ".\\bin"
 log = Log(VERBOSE)
@@ -47,7 +46,7 @@ try:
 	if ANDROID:
 		#Config
 		suffix = ".aab" if RELEASE else ".apk"
-		key = "C:\\pDebug.jks"
+		key = "Your/Key.jks"
 
 		dir_out += f"\\android{outSuffix}"
 		FILE_OUT = dir_out + "\\" + Config.GetOutputName(suffix)
@@ -56,8 +55,7 @@ try:
 		#Assets and Resources
 		manifest = AndMnfst(release=RELEASE)
 		WriteAssets()
-		WriteAArchive(DIR_ASSETS, False, VERBOSE)
-		IconBuild( "android", "./app.ico", VERBOSE, False)
+		IconBuild("android", "./app.ico", VERBOSE, False)
 
 		#Source Build
 		cppFiles: list[str] = FetchFiles(FILE_OUT, DIR_SRC + "\\*.cpp", ".h", VERBOSE)
@@ -72,7 +70,7 @@ try:
 		if not COMPILEONLY:
 			P_Ex.RunParrallel(runCmd[0])
 			subprocess.run(runCmd[1], shell=True)
-			subprocess.run("clear", shell=True)
+			subprocess.run("cls", shell=True)
 
 		exit(0)
 
@@ -84,7 +82,6 @@ try:
 
 		#Assets and Resources
 		WriteAssets()
-		WriteAArchive(DIR_ASSETS, False, VERBOSE)
 		IconBuild("win32", "./app.ico", VERBOSE)
 		WinRes(VERBOSE)
 		
@@ -95,7 +92,7 @@ try:
 		#Run
 		if not COMPILEONLY:
 			P_Ex.RunParrallel(FILE_OUT)
-			subprocess.run("clear", shell=True)
+			subprocess.run("cls", shell=True)
 
 		exit(0)
 

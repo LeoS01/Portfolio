@@ -43,6 +43,7 @@ inline void Android_ThrowError(JNIEnv* env, const char* msg){
 
 #pragma region TOUCH
     P_AndroidVoid_App(InputTouchDummy)(JNIEnv*, jobject){
+        Plum::App::P_Touch::Bridge::isTouchable = true;
         P_LOG_SUCCESS("Loaded Touch-Module for android!");
 	}
 

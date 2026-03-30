@@ -43,7 +43,9 @@ def WriteAArchive(inputDir:str, recursive:bool, verbose:bool, illegalSuffixes:li
         def __init__(self, name_AsciiNullTerm: bytes, content: bytes):
             #Utils
             def ENCODE(byteInput: bytes) -> bytes:
+
                 #(Conventiently left out)
+
                 return byteInput
     
             #Init

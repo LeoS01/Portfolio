@@ -148,7 +148,7 @@ def FetchFiles(fileForDateComparison: str, searchPattern:str, includeSuffix:str 
             continue
         else: log.VMessage(f"'{file.name}' does not contain any affected includes")
 
-        log.Success(f"no need to recompile '{file.name}'!")
+        log.Info(f"no need to recompile '{file.name}'!")
             
     return targetFiles
 
@@ -160,7 +160,7 @@ if __name__ == "__main__":
         description=HELPMSG
     )
 
-    argprs.add_argument("-v", "--verbose", action="store_true", help=+"Log detailed output")
+    argprs.add_argument("-v", "--verbose", action="store_true", help="Log detailed output")
     argprs.add_argument("-d", "--dateFile", action="store", help="File to compare date against")
     argprs.add_argument("-i", "--inputDir", action="store", help="Directory to input pattern (e.G. code/*.cpp)")
     argprs.add_argument("-icl", "--includeSuffix", action="store", help="Directory to include suffix (e.G. '.h')")

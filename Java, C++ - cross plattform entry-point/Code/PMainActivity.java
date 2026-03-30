@@ -126,7 +126,7 @@ public class PMainActivity extends Activity implements SurfaceHolder.Callback{
 
         //Init Modules
         try{
-
+            TouchInput.Check(); //Just tells the game that touch is avaialable~
             if(RWDir.Check()) RWDir.Set(this);
             if(Assets.Check()) Assets.Init( this ); 
             if(GameApp.Check()) GameApp.Open( this );

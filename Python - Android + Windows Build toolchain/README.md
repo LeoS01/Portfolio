@@ -10,6 +10,9 @@ Most steps of the toolchain involve:
 - Execute step-command
 - Return / Validate out 
 
+Its build over the idea that each folder represents a single step~ with the output being at its root, sub-steps being sub-folders.
+Because the output is the sum of its steps, each output folder has a set of sub-folders (steps) and its output (e.G. an .exe or .apk)
+
 
 ### Alternatives
 "Why not just use gradle or cmake?"
@@ -19,4 +22,11 @@ It comes down to a matter of long term strategy~ While the tools mentioned above
 
 
 ### Known shortcomings
-The cpp linkage may yield errors when deleting .cpp files. A potential solution would be to validate present .cpp and .obj files before linking. It hasn't been implemented yet, as other issues had a higher priority.
+- The cpp linkage may yield errors when deleting .cpp files. A potential solution would be to validate present .cpp and .obj files before linking.
+
+- Step-name convention could create hidden folders on UNIX-Systems ~ while this could be favorable, its inconsistent in comparison to building on
+windows.
+
+- Specific phrasing of log-messages is sometimes inconsistent.
+
+Due to the toolchains overall stability and more pressing issues, these shortcomings have to wait.

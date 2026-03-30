@@ -27,8 +27,17 @@ class Config:
         Config.outputDirectory = newOutputDir
         return Config.outputDirectory
     
+    outputName:str = None
+    def OverwriteOutputName(name:str) -> str:
+        Config.outputName = name
+        Log(False).Info(f"Set output name to be: {Config.outputName}")
+        return Config.outputName
+    
     def GetOutputName(suffix = "") -> str:
-        return Path.cwd().name.replace(" ", "") + suffix
+        if Config.outputName is None:
+            Config.outputName = Path.cwd().name.replace(" ", "")
+            Log(False).Info(f"Configured output name to be: {Config.outputName}")
+        return Config.outputName + suffix
 
 #Misc
 def AutoDependencyInstall(libs: list[str]) -> int:

@@ -37,6 +37,28 @@
 namespace Plum::App {
 
 class P_GameApp{
+//Project Interface
+public:
+    //Executed in order of suffix*
+    enum class Message : char{
+        CreateWorld = 0,
+        CreateGraphics = 1,
+        DeleteGraphics = 2,
+        DeleteWorld = 3
+    };
+
+    //v overwrite these functions!
+    //Don't forget to add the 'Plum::App::P_GameApp::' prefix!^^
+    static void HandleMessage(Message msg);
+    static void OnFrame();
+    static void OnResize(std::pair<int, int>);
+
+    //Windows: HWND
+    //Android: ANativeWindow*
+    inline static void* mainHandle = nullptr;	
+
+
+//Engine
 public:
     struct Config{
     public:
@@ -50,28 +72,10 @@ public:
     inline static void Create(P_GameApp::Config cfg);	
     inline static bool Run();
     inline static void Destroy();
-    
-    
-public:
-    //User defined methods, executed in order of suffix*
-    static void CreateGameWorld_0();    
-    static void CreateGraphics_1();
-    
-    static void RunApp_2();
-    static void OnResize_2(std::pair<int, int>);
 
-    static void ReleaseGraphics_3();
-    static void ReleaseGameWorld_4();
-
-    //*Graphics aswell as gameworld may be created/released many times at arbitrary points on android
 private:
     struct Specifications;
     inline static Specifications* specs = nullptr;
-
-public:
-    //Windows: HWND
-    //Android: ANativeWindow*
-    inline static void* mainHandle = nullptr;	
 
 public:
     inline static void* GetMainHandle(){ return mainHandle; }
@@ -109,12 +113,22 @@ public:
         exit(param);
     }
 
+    #ifdef _WIN32
+    inline static LONG WINAPI SignalTranslation(LPEXCEPTION_POINTERS ptrs){
+        //https://learn.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-setunhandledexceptionfilter
+        std::cout << "\x1B[31m FATAL ERROR" << std::endl;   //(ANSI Red)
+        return EXCEPTION_EXECUTE_HANDLER;
+    }
+    #endif
+
     inline static void InitSignalHandle(){
-#ifdef DEBUG
+    #ifdef _WIN32
+        SetUnhandledExceptionFilter(SignalTranslation);
+    #else
         signal(SIGABRT, HandleSignal);
         signal(SIGILL, HandleSignal);
         signal(SIGSEGV, HandleSignal);
-#endif
+    #endif
     }
 };
 
@@ -174,7 +188,6 @@ private:
         SetWindowPos(window, HWND_TOPMOST, mRect.left, mRect.top, screenRez.first, screenRez.second, SWP_FRAMECHANGED);	
 
         isFullScreen = true;
-        P_GameApp::OnResize_2( GetClientRez() );
     }
     
     inline static void SetWindowed(std::pair<int, int> targetRez){
@@ -189,8 +202,7 @@ private:
             targetRez.first, targetRez.second, 
             SWP_FRAMECHANGED);
 
-        isFullScreen = false;			
-        P_GameApp::OnResize_2( GetClientRez() );
+        isFullScreen = false;	
     }
 
     inline static void SwitchResolutionState(){
@@ -213,7 +225,7 @@ private:
 private:
     //https://learn.microsoft.com/en-us/windows/win32/winmsg/window-styles
     inline static long borderlessFullscreenStyle =  WS_VISIBLE;
-    inline static long windowedStyle = WS_OVERLAPPED | WS_VISIBLE | WS_CAPTION | WS_SYSMENU;
+    inline static long windowedStyle = WS_OVERLAPPED | WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME;
     inline static bool isFullScreen = false;
     inline static bool isAlive = true;
 
@@ -226,7 +238,6 @@ inline void P_GameApp::Create(P_GameApp::Config cfg){
     using namespace std;
     
     SetProcessDPIAware();
-    P_GameApp::InitSignalHandle();
     specs = new P_GameApp::Specifications();
 
     //Window-Name to correct format (WCHAR), https://learn.microsoft.com/en-us/windows/win32/api/stringapiset/nf-stringapiset-multibytetowidechar
@@ -253,13 +264,17 @@ inline void P_GameApp::Create(P_GameApp::Config cfg){
         screenRez.first * _rezScale, screenRez.second * _rezScale, 
         NULL, NULL, hInstance, NULL);
         
-    if(specs->window == nullptr){
+    if(specs->window == nullptr || !specs->isAlive){
         P_LOG_ERROR("Error: Failed to register window!");
         return;
     }
-        
-    RegisterTouchWindow(specs->window, 0);	//if no touch supported this will just return failure~
     mainHandle = specs->window;
+    
+    //Register touch
+    //https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-registertouchwindow
+    //https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getsystemmetrics
+    P_Touch::Bridge::isTouchable = GetSystemMetrics(SM_DIGITIZER) & NID_EXTERNAL_PEN != 0;  //only count as being touchable when more than a pen is available
+    RegisterTouchWindow(specs->window, 0);      //register no matter what. Returns 0 on failure
 }
 
 
@@ -310,51 +325,88 @@ inline void Win_OpenFatalErrorWindow(const char* msg){
 
 inline LRESULT CALLBACK Plum::App::P_GameApp::Specifications::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){ 
     //https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-defwindowproca
-    //https://learn.microsoft.com/en-us/windows/win32/learnwin32/writing-the-window-procedure
-    //https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getpointerinfo
-    //https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-get_pointerid_wparam
-
     using namespace Plum::App;
     using namespace std;
 
-    //Checks
-    if(msg == WM_DESTROY || msg == WM_CLOSE || msg == WM_QUIT){ isAlive = false; }
+    //Validate
+    if(!isAlive) return DefWindowProc(hwnd, msg, wparam, lparam);
 
     //Main Switch
-    switch (msg)
+    try
     {
-        //Touch Update
-        case WM_POINTERDOWN:
-        case WM_POINTERUPDATE:
-        case WM_POINTERUP:
-            UINT32 pointerID = GET_POINTERID_WPARAM(wparam);
-            POINTER_INFO info = {};
-
-            //Checks
-            if(!GetPointerInfo(pointerID, &info)){
-                P_LOG_ERROR("Couldn't get touch-pointer info!");
-                break;
-            }
-            if(info.pointerType != PT_TOUCH) break;
-
-
-            switch(msg){
-                case WM_POINTERDOWN:
-                    P_Touch::Specifications::AddTouchInput((int)pointerID, {info.ptPixelLocation.x, info.ptPixelLocation.y}, hwnd);
-
-                case WM_POINTERUPDATE:
-                    P_Touch::Specifications::SetTouchInput((int)pointerID, {info.ptPixelLocation.x, info.ptPixelLocation.y}, hwnd);
+        switch (msg)
+        {
+            //Create
+            //https://learn.microsoft.com/en-us/windows/win32/winmsg/wm-create
+            case WM_CREATE:
+                window = hwnd;
+                mainHandle = window;
+                P_GameApp::HandleMessage(P_GameApp::Message::CreateWorld);
+                P_GameApp::HandleMessage(P_GameApp::Message::CreateGraphics);
                 break;
 
-                case WM_POINTERUP:
-                    P_Touch::Specifications::RemoveTouchInput((int)pointerID);
+            //Resize
+            //https://learn.microsoft.com/en-us/windows/win32/winmsg/wm-size
+            case WM_SIZE:
+                P_GameApp::OnResize( {static_cast<int>(LOWORD(lparam)), static_cast<int>(HIWORD(lparam))} );
                 break;
-            }
 
-        break;
+            //Delete
+            //https://learn.microsoft.com/en-us/windows/win32/winmsg/wm-close
+            case WM_CLOSE:
+                isAlive = false;
+                P_GameApp::HandleMessage(P_GameApp::Message::DeleteGraphics);
+                P_GameApp::HandleMessage(P_GameApp::Message::DeleteWorld);
+                return 0;
 
+            case WM_DESTROY:
+                PostQuitMessage(0);
+                return 0;
+
+
+            //Touch Update
+            //https://learn.microsoft.com/en-us/windows/win32/learnwin32/writing-the-window-procedure
+            //https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getpointerinfo
+            //https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-get_pointerid_wparam
+            case WM_POINTERDOWN:
+            case WM_POINTERUPDATE:
+            case WM_POINTERUP:
+                UINT32 pointerID = GET_POINTERID_WPARAM(wparam);
+                POINTER_INFO info = {};
+
+                //Checks
+                if(!GetPointerInfo(pointerID, &info)){
+                    P_LOG_ERROR("Couldn't get touch-pointer info!");
+                    break;
+                }
+                if(info.pointerType != PT_TOUCH) break;
+
+
+                switch(msg){
+                    case WM_POINTERDOWN:
+                        P_Touch::Specifications::AddTouchInput((int)pointerID, {info.ptPixelLocation.x, info.ptPixelLocation.y}, hwnd);
+
+                    case WM_POINTERUPDATE:
+                        P_Touch::Specifications::SetTouchInput((int)pointerID, {info.ptPixelLocation.x, info.ptPixelLocation.y}, hwnd);
+                        break;
+
+                    case WM_POINTERUP:
+                        P_Touch::Specifications::RemoveTouchInput((int)pointerID);
+                        break;
+                }
+
+                break;
+
+        }
     }
-
+    catch(const std::exception& e)
+    {
+        Win_OpenFatalErrorWindow(e.what());
+        isAlive = false;
+        PostQuitMessage(-1);
+        return 0;
+    }
+    
     return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
@@ -362,50 +414,34 @@ inline LRESULT CALLBACK Plum::App::P_GameApp::Specifications::WindowProc(HWND hw
 int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int){
     using namespace Plum::App;
 
-    //Alloc
-    std::string prefix = "Failed game during init: ";
-    std::stringstream errorMsg = {};
-    int errorCode = 0;
-    
     //Init
+    //Lifecycle Handling in mainproc
+    P_GameApp::InitSignalHandle();
     try
     {
+        //Init
         P_GameApp::Config cfg(P_DISPLAYNAME);
         P_GameApp::Create(cfg);   
-        P_GameApp::CreateGameWorld_0();
-        P_GameApp::CreateGraphics_1();
-        //OnResize_2 is called in Windows-Definition! (SwitchResolutionState)
 
-        prefix = "Failed game during main-loop: ";
         //Run
         while (P_GameApp::Run()){
-            P_GameApp::RunApp_2();
+            P_GameApp::OnFrame();
         }
-    }
-    catch(const std::exception& e)
-    {
-        errorMsg << prefix << e.what();
-        Win_OpenFatalErrorWindow(errorMsg.str().c_str());
-        errorCode -= 1;
-    }
 
-
-    //Close
-    try{
-        P_GameApp::ReleaseGraphics_3();
-        P_GameApp::ReleaseGameWorld_4();
         P_GameApp::Destroy();
+        P_LOG_SUCCESS("Application is returning!");
+        return 0;
     }
     catch(const std::exception& e)
     {
-        errorMsg << "Failed closing the game: " << e.what();
-        Win_OpenFatalErrorWindow(errorMsg.str().c_str());
-        errorCode -= 1;
+        P_LOG_ERROR(e.what());
+        Win_OpenFatalErrorWindow(e.what());
+        P_LOG_SUCCESS("Application is returning!");
+        return -1;
     }
 
-    if(errorCode == 0) P_LOG_SUCCESS("Successfully closed app!");
-    if(errorCode != 0) P_LOG_ERROR("Closed app with errors");
-    return errorCode;
+    P_LOG_SUCCESS("Application is returning!");
+    return 0;
 }
 
 #endif
@@ -483,7 +519,7 @@ P_AndroidVoid_App(InitGameApp)(JNIEnv* env, jobject){
         P_GameApp::Config cfg(P_DISPLAYNAME);
         P_GameApp::Create(cfg);  
 
-        P_GameApp::CreateGameWorld_0(); 
+        P_GameApp::HandleMessage(P_GameApp::Message::CreateWorld);
     } catch (const std::exception& e){    
         Android_ThrowError(env, e.what());
     }
@@ -496,7 +532,7 @@ P_AndroidVoid_App(InitAppGraphics)(JNIEnv* env, jobject, jobject surface){
         P_GameApp::SetMainHandle( ANativeWindow_fromSurface(env, surface) );
         P_LOG_SUCCESS("Aquired ANAtiveWindow!");
 
-        P_GameApp::CreateGraphics_1();
+        P_GameApp::HandleMessage(P_GameApp::Message::CreateGraphics);
     } catch (const std::exception& e){    
         Android_ThrowError(env, e.what());
     }
@@ -505,7 +541,7 @@ P_AndroidVoid_App(InitAppGraphics)(JNIEnv* env, jobject, jobject surface){
 P_AndroidVoid_App(RunGameApp)(JNIEnv* env, jobject){
     using namespace Plum::App;
     try{
-        P_GameApp::RunApp_2();
+        P_GameApp::OnFrame();
     } catch (const std::exception& e){    
         Android_ThrowError(env, e.what());
     }
@@ -514,7 +550,7 @@ P_AndroidVoid_App(RunGameApp)(JNIEnv* env, jobject){
 P_AndroidVoid_App(ResizeAppGraphics)(JNIEnv* env, jobject, int w, int h){
     using namespace Plum::App;
     try{
-        P_GameApp::OnResize_2( {w, h} );
+        P_GameApp::OnResize( {w, h} );
     } catch (const std::exception& e){    
         Android_ThrowError(env, e.what());
     }
@@ -527,7 +563,7 @@ P_AndroidVoid_App(CloseAppGraphics)(JNIEnv* env, jobject){
         P_GameApp::SetMainHandle(nullptr);
         P_LOG_SUCCESS("Released ANativeWindow!");
 
-        P_GameApp::ReleaseGraphics_3();
+       P_GameApp::HandleMessage(P_GameApp::Message::DeleteGraphics);
     } catch (const std::exception& e){    
         Android_ThrowError(env, e.what());
     }
@@ -537,7 +573,7 @@ P_AndroidVoid_App(CloseGameApp)(JNIEnv* env, jobject){
     using namespace Plum::App;
 
     try{
-        P_GameApp::ReleaseGameWorld_4();
+        P_GameApp::HandleMessage(P_GameApp::Message::DeleteWorld);
         P_GameApp::Destroy();
     } catch (const std::exception& e){    
         Android_ThrowError(env, e.what());
