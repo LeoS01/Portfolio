@@ -22,11 +22,10 @@ It comes down to a matter of long term strategy~ While the tools mentioned above
 
 
 ### Known shortcomings
-- The cpp linkage may yield errors when deleting .cpp files. A potential solution would be to validate present .cpp and .obj files before linking.
+- The cpp linking may yield errors when deleting .cpp files from the project. A potential solution would be to validate present .cpp and .obj files before linking.
 
-- Step-name convention could create hidden folders on UNIX-Systems ~ while this could be favorable, its inconsistent in comparison to building on
-windows.
+- Naming conventions could create hidden folders on UNIX-Systems ~ while this could be favorable, its inconsistent in comparison to the folder rendering on windows.
 
-- Specific phrasing of log-messages is sometimes inconsistent.
+- Specific phrasing of log-messages has some inconsistensies.
 
 Due to the toolchains overall stability and more pressing issues, these shortcomings have to wait.

@@ -3,7 +3,7 @@ Context: Custom retro game-engine.
 
 The parser is able to deal with any .tga format (colormapping, RLE-Compression, ...).
 While pre-existent libraries could've been used instead, thorough understanding and control are of priority.
-As retro-styled games are the overarching goal, the maximum valid image size was kept very low (1MB) - which can be changed on demand.
+As retro-styled games are the overarching goal, the maximum valid image size was kept very low (1MB) - which can reconfigured.
 
 
 ### Usage
