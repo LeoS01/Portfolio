@@ -39,7 +39,7 @@ namespace Plum::App {
 class P_GameApp{
 //Project Interface
 public:
-    //Executed in order of suffix*
+    //Executed in this order
     enum class Message : char{
         CreateWorld = 0,
         CreateGraphics = 1,
@@ -62,7 +62,7 @@ public:
 public:
     struct Config{
     public:
-        Config(std::string name){
+        inline Config(std::string name){
             this->name = name;
         }
         std::string name = "P_GameApp";
@@ -177,11 +177,11 @@ private:
         RECT mRect = mInfo.rcMonitor;
         pair<int, int> screenRez = { mRect.right - mRect.left, mRect.bottom - mRect.top };
 
-        #ifdef P_APP_WIN_SAFESIZE
+    #ifdef P_APP_WIN_SAFESIZE
         const int BUG_ADJUSTMENT = 1;		//For whatever reason, having the EXACT Window-Size seems to cause problems...
         screenRez.first += BUG_ADJUSTMENT;
         screenRez.second += BUG_ADJUSTMENT;
-        #endif
+    #endif
 
 
         SetWindowLong(window, GWL_STYLE, borderlessFullscreenStyle);
