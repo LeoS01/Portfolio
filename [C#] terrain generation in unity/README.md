@@ -1,5 +1,5 @@
 ### Description
-Context: University.
+Context: University-Class.
 
 The base-class 'Procedural-Mesh' initializes the generation of vertex-data (positions and indices).
 'ProdecuralTerrain' places these vertices in a grid.

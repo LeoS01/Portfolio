@@ -20,7 +20,7 @@ And the resolution with: 'file.GetRez()' where .first = width and .second = heig
 
 
 ### Known Shortcomings
-- 1MB File-Size is an imprecise metric for retro-graphics and does not accurately reflect legacy consoles memory constraints~ a high-resolution .tga image could easily bypass this limit via compression. A max. valid resolution would've been closer to actual retro graphics limitations.
+- 1MB File-Size is an imprecise metric for retro-graphics and does not accurately reflect legacy memory-constraints. A high-resolution .tga image could easily bypass this limit via compression. A max. valid resolution would've been closer to actual retro-graphics limitations.
 
 - Newer .tga features (e.G. footer) haven't been implemented~ the parser only handles the pixel data.
 
