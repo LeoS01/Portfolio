@@ -12,7 +12,7 @@ The main communication between Android and the game resides in PMainActivity.jav
 
 ### Known issues
 - Seperation of OnResize and Handlemessage is mostly done solely for different parameters~ unification could aid the developer-experience.
-- The public enum 'Message' implies shared access to P_GameApp's messages. However, this iteration is written to be included in a single translation unit (otherwise yielding linking-errors)- this design potentially encouraging these, rendering it redundant.
+- The public enum 'Message' implies shared access to P_GameApp's messages. However, this iteration is written to be included in a single translation unit (otherwise yielding linking-errors). This design could thus encourage errors or lead to repeated functionality.
 
 - Despite being named 'game-app', basic features like delta-time or fixed-update computations aren't implemented in this class. While this was a conscious design decision (decoupling these computations as individual engine-headers to improve modularity), a name like 'P_RealtimeApp' might've been more precise.
 
