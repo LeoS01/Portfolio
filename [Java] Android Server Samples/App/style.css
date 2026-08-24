@@ -1,0 +1,99 @@
+:root{
+    --col_top: #fb72d9;
+    --col_ol: #8f7588;
+    --col_mid: #171416;
+    --col_bottom: #292327;
+    
+    --pad_min: 16px;
+    --pad_max: 32px;
+    --sz_min: 16px;
+    --sz_max: 256px;
+    --sz_txt: 24px;
+}
+
+.title{
+    font-family: "arial";
+    font-size: 50px;
+    color: var(--col_top);
+    padding: var(--pad_max);
+}
+
+.text{
+    font-family: "arial";
+    font-size: var(--sz_txt);
+    color: var(--col_top);
+    padding: var(--pad_max);
+}
+
+.bkg{
+    background-color: var(--col_bottom);
+}
+
+.selectGrid{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: var(--pad_max);
+    gap: var(--pad_min);
+    row-gap: var(--pad_min);
+    overflow-y: auto;
+    justify-content: center;
+}
+
+.griButton{
+    width: var(--sz_max);
+    height: var(--sz_max);
+}
+
+.griSlider{
+    padding: 1vh;
+    color: var(--col_top);
+    background-color: var(--col_top);
+}
+
+
+.selectable{
+    font-family: "arial";
+    font-size: var(--sz_txt);
+    overflow-wrap: break-word;
+    text-align: center;
+    background-color: transparent;
+    color: var(--col_top);
+    background-color: var(--col_mid);
+    border-radius: var(--pad_min);
+    border: 1px var(--col_ol) solid;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    transition-delay: calc(var(--i) * .02s);
+}
+
+.selectable:hover{
+    transform: scaleX(1.01) scaleY(1.01);
+    box-shadow: 0px 0px 10px var(--col_ol);
+}
+
+.selectable:active{
+    transform: scaleX(1) scaleY(1) translateY(1%);
+    box-shadow: 0px 0px 5px var(--col_ol);
+    filter: brightness(.8);
+}
+
+
+.fadeIn{
+    opacity: 0;
+    transform: translateY(-1%);
+    animation: fadeIn .4s ease forwards;
+    animation-delay: calc(var(--i) * .1s);
+}
+
+@keyframes fadeIn{
+    to{
+        transform: inherit;
+        opacity: inherit;
+    }
+}
+
+.invisible{
+    transform: translateY(4%) scaleX(.9) scaleY(1.1);
+    opacity: 0;
+}

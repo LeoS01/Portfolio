@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8"/>
+    <title> [🎬🎵] </title>
+    <link rel="stylesheet" href="style.css"/>
+    
+    <style>
+        :root{
+            --listWidth: 50vw;
+            --vidWidth: 50vw;
+        }
+
+        #mediaList{
+            width: var(--listWidth);
+            padding-left: calc(var(--vidWidth) + var(--sz_min));
+        }
+        
+        .vidContainer{
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+        }
+        
+        video{
+            top: 0;
+            left: 0;
+            width: var(--vidWidth);
+            height: calc(60vh);
+            transition: opacity .4s ease-in-out;
+        }
+        
+        .ready{
+            transition: font-size .4s, ease-in-out;
+        }
+        
+        .loading{
+            font-size: 0px;
+        }
+        
+    </style>
+</head>
+
+<html>
+    <body class="bkg" style="display: flex; flex-direction: row; gap: var(--sz_min);">
+
+        <div class="vidContainer">
+            <video id="vPlayer" controls class="fadeIn selectable" style="--i: 0"> 
+                This browser does not support the video tag.
+            </video>
+
+            <div class="selectGrid">
+                <button id="playRandom" class="controlButton griButton selectable fadeIn" style="--i: 3">
+                    📻 Play
+                </button>
+            </div>
+        </div>
+
+        <div id="mediaList" class="selectGrid"> 
+
+        </div>
+    </body>
+
+</html>
+
+<script type="module">
+    import {GETAll, PUTData} from "./Fetch.js"
+    
+    //Persistent variables
+    const activePlayer = document.getElementById("vPlayer");
+    const mediaSelection = document.getElementById("mediaList");
+    let buttonObserver = null;
+    let allElements = [];
+    let isFading = false;
+    let lastIndex = 0;
+
+    //Utils
+    function Fade(duration, OnEmpty){
+        //First from n to 0
+        const steps = 20;
+        const intervalTime = duration / steps;
+        let currentStep = 0;
+        let startVolume = activePlayer.volume;
+
+        const timeOut = setInterval( () => {
+            let t = currentStep / steps;
+            activePlayer.volume = (1 - t) * startVolume;
+            activePlayer.style.opacity = (1 - t);
+
+            currentStep++;
+            if(currentStep < steps) return;
+
+            currentStep = 0;
+            clearInterval(timeOut);
+            OnEmpty();
+
+            //Fade back in
+            const timeIn = setInterval( () => {
+                let t = currentStep / steps;
+
+                activePlayer.volume = t * startVolume;
+                activePlayer.style.opacity = t;
+
+                currentStep++;
+                if(currentStep >= steps) {
+                    clearInterval(timeIn);
+                    activePlayer.volume = startVolume;
+                    activePlayer.style.opacity = 1.0;
+                }
+            }, intervalTime);
+
+        }, intervalTime);
+    }
+
+    function PlayRandomVideo(){
+        if(isFading) return;
+
+        isFading = true;
+        Fade(1.0, () => {
+            if(!isFading) return;
+            activePlayer.src = allElements[ Math.floor( Math.random() * allElements.length ) ];
+            activePlayer.load();
+            activePlayer.play();
+            isFading = false;
+        });
+    };
+
+    function PlayNext(index){
+        if(isFading) return;
+
+        isFading = true;
+        Fade(1.0, () => {
+            if(!isFading) return;
+            ++index;
+            const nextMediaPath = allElements[ (index) % allElements.length];
+            activePlayer.onended = () => { PlayNext(index); };
+            activePlayer.src = nextMediaPath;
+            activePlayer.load();
+            activePlayer.play();
+            isFading = false;
+        });
+    }
+
+    //Button Functions
+    function PlayRadio(){
+        //play 1x random video
+        activePlayer.onended = PlayRandomVideo;
+        activePlayer.onloadedmetadata = null;
+
+        PlayRandomVideo();
+    }
+        
+    //Config baseics
+    allElements = await GETAll( ["*.mp4", "*.mp3"] );
+    document.getElementById("playRandom").addEventListener("click", PlayRadio);
+
+    //Initialize Page
+    buttonObserver = new IntersectionObserver( (entries) => {
+        for(const entry of entries){
+            if(entry.isIntersecting){
+                entry.target.classList.remove("invisible");
+            } else{
+                entry.target.classList.add("invisible");
+            }
+        }
+    }, {threshold: 0.02} );
+     
+    //Fill in paths
+    mediaSelection.replaceChildren();
+    for(let i = 0; i < allElements.length; i++){
+        const mediaPath = allElements[i];
+        console.log("Appending file: " + mediaPath);
+        const pathElements = mediaPath.split("/");
+
+        //Create
+        const button = document.createElement("button");
+        button.textContent = pathElements[pathElements.length - 1];
+        button.className = "griButton selectable invisible";
+        buttonObserver.observe(button);
+
+        button.addEventListener("click", () => {
+            isFading = false;
+
+            //Reconfigure
+            activePlayer.onended = () => { PlayNext(i); };
+            activePlayer.onloadedmetadata = null;
+
+            activePlayer.src = mediaPath;
+            activePlayer.style.opacity = 1.0;
+            activePlayer.load();
+            activePlayer.play();
+        });
+
+        
+        //Register
+        mediaSelection.append(button);
+
+        //Note: This animation style will result in unpredictable but somewhat symmetric patterns
+        button.style = "--i: " + ( (button.offsetLeft / (screen.width * .2)) % 4) + ";";
+    }
+
+/*
+    document.addEventListener("visibilitychange", ()=>{
+        if(document.visibilityState !== "hidden") return;
+        PUTData("data", "uri");
+        console.log("Should post!!!!");
+    });
+*/
+</script>
